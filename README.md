@@ -26,4 +26,12 @@ steering gets dome per WLAN.
 
 if you want to copy this - have fun :-)
 
+
+in my actual implementation i had a Problem: my candles hat common + and seperate -. In order to run them on GPIO's i needed 9 NPN Transistor as describen [here](http://c-kolb.bplaced.net/projekte/elektronik/grundlagen/transistor/transistor_npn_pnp.php)
+
+
+On the image:
+![Image of Candles]http://i.imgur.com/bX745KQ.jpg) you can see the candles on aplate with the extra electronics and the lua.
+
+
 Michael

@@ -1,8 +1,8 @@
 #Fire 3 LED RGB Candles with a ESP8266WiFi
 
-Last Cristmas i bought a triplet of 3 Led candle with a cheap remote. So, why not include them in my (Homematic) home automation?
+Last Christmas i bought a triplet of 3 Led candle with a cheap remote. So, why not include them in my (Homematic) home automation?
 
-Just switchig them on or off did not do the job - on "power on" they came back with some strange color.
+Just switching them on or off did not do the job - on "power on" they came back with some strange color.
 
 So, some more serious surgery was needed. I removed the controller and replaced it by a NodeMCU.
 
@@ -14,7 +14,7 @@ I wasn't aware of multi threading on ESP - so how to let 3 candles flicker indep
 
 In this sketch i tried to turn the algorithm of flickering inside out :-). It gets pretty unreadable, however, for my it produces a fairly nice candle simulation.
 
-stering gets dome per WLAN.
+steering gets dome per WLAN.
 
 * /?s=0 - off
 * /?s=100 - on

@@ -1,5 +1,7 @@
 #Fire 3 LED RGB Candles with a ESP8266WiFi
 
+[![Demo flares](https://j.gifs.com/Z6j00R.gif)](https://www.youtube.com/watch?v=TbT0xEX5yE8)
+
 Last Christmas i bought a triplet of 3 Led candle with a cheap remote. So, why not include them in my (Homematic) home automation?
 
 Just switching them on or off did not do the job - on "power on" they came back with some strange color.

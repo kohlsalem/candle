@@ -31,12 +31,19 @@ if you want to copy this - have fun :-)
 
 in my actual implementation i had a Problem: my candles hat common + and seperate -. In order to run them on GPIO's i needed 9 NPN Transistor as describen [here](http://c-kolb.bplaced.net/projekte/elektronik/grundlagen/transistor/transistor_npn_pnp.php)
 
+So I created this:
+![PCB ready](http://i.imgur.com/hrHB6Od.jpg)
+
+![PCB placed](http://i.imgur.com/P0wqi8c.jpg)
 
 
-![Image of Candles](http://i.imgur.com/bX745KQ.jpg) The candles on a plate with the extra electronics and the lua.
+Finally the candles on a plate with the extra electronics and the NodeMCU.
+![Image of Candles](http://i.imgur.com/bX745KQ.jpg) 
 
-[here](https://www.youtube.com/watch?v=WeON1zJlHes) is how normal burn looks like.
-[here](https://youtu.be/TbT0xEX5yE8) you can see the flickering started per URL. Normally this happens once in a while on a candle.
+
+*Here [![candle flare 1](https://i.ytimg.com/vi/WeON1zJlHes/hqdefault.jpg)](https://www.youtube.com/watch?v=WeON1zJlHes "candle flare 1")  is how normal burn looks like.
+
+*Here [![candle flare 2](https://i.ytimg.com/vi/TbT0xEX5yE8/hqdefault.jpg)](https://www.youtube.com/watch?v=TbT0xEX5yE8 "candle flare 2")   you can see the flickering started per URL. Normally this happens once in a while on a candle.
 
 
 Michael

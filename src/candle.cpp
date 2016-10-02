@@ -1,14 +1,17 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
-#include <ArduinoOTA.h>
-#include <Arduino.h>
-#include <ESP8266WebServer.h>
 
+#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>          //https://github.com/esp8266/Arduino
+//needed for library
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>         //https://github.com/tzapu/WiFiManager
+
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>    //https://github.com/esp8266/Arduino/tree/master/libraries/ArduinoOTA
 
 // SSID/Password
-const char* ssid = "Bobby";
-const char* password = "12345678";
+//const char* ssid = "";
+//const char* password = "";
 
 // base colour distribution for a "nice candle yellow!"
 int base_red    =  100;
@@ -411,13 +414,20 @@ void setupWebServer(){
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+WiFiManager wifiManager;
 
  // after some tries, this seems to be the loweset frequency w/o flicker
  analogWriteFreq(1500);
 
  // switch radio on
  set_rgb_all( 0, 100, 0);
- WiFi.begin(ssid, password);
+
+ //fetches ssid and pass from eeprom and tries to connect
+ //if it does not connect it starts an access point with the specified name
+ //here  "Candle"
+ //and goes into a blocking loop awaiting configuration
+ wifiManager.autoConnect("Candle");
+ //WiFi.begin(ssid, password);
 
  // if wlan fails we sit and wait the watchdog ;-)
  while (WiFi.status() != WL_CONNECTED) {

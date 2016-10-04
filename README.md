@@ -18,8 +18,8 @@ In this sketch i tried to turn the algorithm of flickering inside out :-). It ge
 
 steering gets dome per WLAN.
 
-* /?s=0 - off
-* /?s=100 - on
+* /?b=0 - off
+* /?b=100 - on
 * /fire?s=60 - fire animation for 10 seconds
 * /flicker?s=10 - flicker 10 seconds
 * /flutter?s=5 - flutter 5 seconds
@@ -38,7 +38,7 @@ So I created this:
 
 
 Finally the candles on a plate with the extra electronics and the NodeMCU.
-![Image of Candles](http://i.imgur.com/bX745KQ.jpg) 
+![Image of Candles](http://i.imgur.com/bX745KQ.jpg)
 
 
 *Here [![candle flare 1](https://i.ytimg.com/vi/WeON1zJlHes/hqdefault.jpg)](https://www.youtube.com/watch?v=WeON1zJlHes "candle flare 1")  is how normal burn looks like.

@@ -16,7 +16,7 @@
 // base colour distribution for a "nice candle yellow!"
 int base_red    =  100;
 int base_green  =  70;
-int base_blue   =  10;
+int base_blue   =  12;
 
 // how many candles get animated?
 #define NR_CANDLES  3
@@ -34,7 +34,7 @@ int base_blue   =  10;
 
 
 // General brightness of the candles, used to dim or to swicht off
-byte brightnes = 100;
+byte brightnes = 0;
 
 // Animation programm running per candle
 byte program[ NR_CANDLES ] = { PRG_ON, PRG_ON, PRG_ON};
@@ -102,7 +102,7 @@ void set_candle(int candle, float dim){
  // red dimming improved the look of my animations,
  // but should be done carefully
  // if red is shared among the candles.
- set_rgb(candle, 	base_red * (0.5+0.5*(dim/100)),
+ set_rgb(candle, 	base_red * (0.3+0.7*(dim/100)),
  base_green*dim/100,
  base_blue * (0.5+0.5*(dim/100)));
 }
@@ -136,7 +136,7 @@ void doFlickerCandle(int candle, int seconds){
 void doFlutterCandle(int candle, int seconds){
  program[candle] = PRG_FLUTTER;
  candle_dim[candle] = 100;
- dim_limit[candle] = 20;
+ dim_limit[candle] = 50;
  acceleration[candle]= -1;
  waitBetweenFlicks[candle] = random(400)+300;
  flickFadeoutFactor[candle] = 2;
@@ -154,6 +154,19 @@ void doOnCandle(int candle, int seconds){
  waitcnt[candle] = 1000*seconds;
 }
 
+void doSwitchOn(){
+  for(int cnd=0;cnd<NR_CANDLES;cnd++){
+    doFlickerCandle(cnd,5);
+    candle_dim[cnd] = 0;
+    waitcnt[cnd] = 0;
+    acceleration[cnd]= -0.5;
+  }
+}
+
+void doSwitchOff(){
+
+
+}
 
 void handleCandle(int candle){
 
@@ -199,7 +212,7 @@ void handleCandle(int candle){
 
    // last cycle of a fire animation reached.
    if(repeat[candle]==0){
-     if(random(10)>8){
+     if(random(100)>90){
        doFlickerCandle(candle,random(15));
      }else{
        doOnCandle(candle,random(10));
@@ -210,7 +223,7 @@ void handleCandle(int candle){
    case PRG_FLICKER:
    // last cycle of a fire animation reached.
    if(repeat[candle]==0){
-     if(random(10)>8){
+     if(random(100)>90){
        doFlutterCandle(candle,random(10));
      }else{
        doOnCandle(candle,random(10));
@@ -221,7 +234,7 @@ void handleCandle(int candle){
    case PRG_FLUTTER:
    // last cycle of a fire animation reached.
    if(repeat[candle]==0){
-     if(random(10)>8){
+     if(random(100)>90){
        doFlickerCandle(candle,random(10));
      }else{
        doOnCandle(candle,random(10));
@@ -277,15 +290,16 @@ void loop() {
 
 
 void setupWebServer(){
- // listen to brightness changes
+ // listen to brightnes changes
  server.on("/", []()
  {
    if (server.arg("b") != "")
-   {
-     brightnes = (byte) server.arg("b").toInt();
-     if (brightnes > 100) brightnes = 100;
-     if (brightnes < 0) brightnes = 0;
+   { int b = constrain((byte) server.arg("b").toInt(),0,100);
 
+     if(b>50 && brightnes == 0) doSwitchOn();
+     if(b==0  && brightnes > 0) doSwitchOff();
+
+     brightnes = b;
    }
    String s = "{\n   \"b\":";
    s += brightnes;
@@ -386,23 +400,24 @@ void setupWebServer(){
 
  server.on("/signal", []()
  {
-   for(int i=0; i<20; i++){
+   byte br = brightnes;
+   brightnes = 100;
+   for(int i=0; i<40; i++){
      for(int cnd=0; cnd<NR_CANDLES; cnd++){
        int r=0,g=0,b=0;
-
        while(r+b+g==0){
-         if(random(100)>80)r=100; else r=0;
-         if(random(100)>80)g=100; else g=0;
-         if(random(100)>80)b=100; else b=0;
-         set_rgb(cnd, r,g,b );
+         if(random(100)>90)r=100; else r=0;
+         if(random(100)>66)g=100; else g=0;
+         if(random(100)>66)b=100; else b=0;
        }
-
+       set_rgb(cnd, r,g,b );
      }
-     delay(150);
+     delay(200);
    }
    for(int cnd=0; cnd<NR_CANDLES; cnd++){
      set_candle(cnd,candle_dim[cnd]);
    }
+   brightnes = br;
    server.send(200, "text/plain", "done");
 
  });

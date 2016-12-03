@@ -124,7 +124,7 @@ void doFireCandle(int candle, int seconds){
 void doFlickerCandle(int candle, int seconds){
  program[candle] = PRG_FLICKER;
  candle_dim[candle] = 100;
- dim_limit[candle] = 75;
+ dim_limit[candle] = 80;
  acceleration[candle]= -0.5;
  waitBetweenFlicks[candle] = random(100)+100;
  flickFadeoutFactor[candle] = 1.5;
@@ -136,7 +136,7 @@ void doFlickerCandle(int candle, int seconds){
 void doFlutterCandle(int candle, int seconds){
  program[candle] = PRG_FLUTTER;
  candle_dim[candle] = 100;
- dim_limit[candle] = 50;
+ dim_limit[candle] = 60;
  acceleration[candle]= -1;
  waitBetweenFlicks[candle] = random(400)+300;
  flickFadeoutFactor[candle] = 2;

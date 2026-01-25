@@ -1,0 +1,593 @@
+# ESPHome Konfiguration für ESP8266 LED-Kerze v2.0
+# - Gemeinsame Steuerung aller 3 Kerzen
+# - IMMER automatisches Flackern (keine Effekt-Auswahl)
+# - RGB-Schieberegler für Farbanpassung
+# - Flacker-Kontroll-Schieberegler
+
+esphome:
+  name: candle
+  friendly_name: LED Candles
+  comment: 3 LED Candles with realistic independent flickering
+  
+esp8266:
+  board: nodemcuv2
+  framework:
+    version: recommended
+
+wifi:
+  ssid: "Shelly7"
+  password: "1234Shelly5678"
+
+captive_portal:
+web_server:
+  port: 80
+ota:
+  - platform: esphome
+api:
+logger:
+  level: INFO
+
+# ========================================
+# GLOBALS
+# ========================================
+
+globals:
+  - id: candle_1_brightness
+    type: float
+    initial_value: '1.0'
+  - id: candle_1_acceleration
+    type: float
+    initial_value: '-0.0006'
+  - id: candle_1_dim_limit
+    type: float
+    initial_value: '0.89'
+  - id: candle_1_wait
+    type: int
+    initial_value: '0'
+  - id: candle_1_program
+    type: int
+    initial_value: '1'
+  - id: candle_1_repeat
+    type: int
+    initial_value: '300'
+  - id: candle_1_wait_between
+    type: int
+    initial_value: '60'
+  - id: candle_2_brightness
+    type: float
+    initial_value: '1.0'
+  - id: candle_2_acceleration
+    type: float
+    initial_value: '-0.0006'
+  - id: candle_2_dim_limit
+    type: float
+    initial_value: '0.89'
+  - id: candle_2_wait
+    type: int
+    initial_value: '0'
+  - id: candle_2_program
+    type: int
+    initial_value: '1'
+  - id: candle_2_repeat
+    type: int
+    initial_value: '100'
+  - id: candle_2_wait_between
+    type: int
+    initial_value: '70'
+  - id: candle_3_brightness
+    type: float
+    initial_value: '1.0'
+  - id: candle_3_acceleration
+    type: float
+    initial_value: '-0.0006'
+  - id: candle_3_dim_limit
+    type: float
+    initial_value: '0.89'
+  - id: candle_3_wait
+    type: int
+    initial_value: '0'
+  - id: candle_3_program
+    type: int
+    initial_value: '1'
+  - id: candle_3_repeat
+    type: int
+    initial_value: '15'
+  - id: candle_3_wait_between
+    type: int
+    initial_value: '150'
+  - id: candles_enabled
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+
+# ========================================
+# OUTPUTS
+# ========================================
+
+output:
+  - platform: esp8266_pwm
+    pin: D1
+    id: output_d1
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D2
+    id: output_d2
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D3
+    id: output_d3
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D5
+    id: output_d5
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D6
+    id: output_d6
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D7
+    id: output_d7
+    frequency: 1500Hz
+  - platform: esp8266_pwm
+    pin: D8
+    id: output_d8
+    frequency: 1500Hz
+
+# ========================================
+# SWITCH - Kerzen An/Aus
+# ========================================
+
+switch:
+  - platform: template
+    name: "Candles"
+    id: candles_switch
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_OFF
+    turn_on_action:
+      - globals.set:
+          id: candles_enabled
+          value: 'true'
+      - lambda: |-
+          ESP_LOGI("candle", "Candles ON - Resetting to original values");
+          
+          // Kerze 1 - Fire Modus (Original)
+          id(candle_1_program) = 1;
+          id(candle_1_brightness) = 1.0;
+          id(candle_1_acceleration) = -0.0006;
+          id(candle_1_dim_limit) = 0.89;
+          id(candle_1_wait) = 0;
+          id(candle_1_repeat) = 300;
+          id(candle_1_wait_between) = 60;
+          
+          // Kerze 2 - Fire Modus (Original)
+          id(candle_2_program) = 1;
+          id(candle_2_brightness) = 1.0;
+          id(candle_2_acceleration) = -0.0006;
+          id(candle_2_dim_limit) = 0.89;
+          id(candle_2_wait) = 0;
+          id(candle_2_repeat) = 100;
+          id(candle_2_wait_between) = 70;
+          
+          // Kerze 3 - Fire Modus (Original)
+          id(candle_3_program) = 1;
+          id(candle_3_brightness) = 1.0;
+          id(candle_3_acceleration) = -0.0006;
+          id(candle_3_dim_limit) = 0.89;
+          id(candle_3_wait) = 0;
+          id(candle_3_repeat) = 15;
+          id(candle_3_wait_between) = 150;
+    turn_off_action:
+      - globals.set:
+          id: candles_enabled
+          value: 'false'
+      - lambda: |-
+          ESP_LOGI("candle", "Candles OFF");
+          id(output_d1).set_level(0);
+          id(output_d2).set_level(0);
+          id(output_d3).set_level(0);
+          id(output_d5).set_level(0);
+          id(output_d6).set_level(0);
+          id(output_d7).set_level(0);
+          id(output_d8).set_level(0);
+
+# ========================================
+# INTERVAL - Animation läuft IMMER wenn an
+# ========================================
+
+interval:
+  - interval: 1ms
+    then:
+      - lambda: |-
+          static unsigned long last_alive = 0;
+          unsigned long now = millis();
+          
+          // ALIVE Check alle 5 Sekunden
+          if (now - last_alive > 5000) {
+            ESP_LOGD("candle", "ALIVE: interval running, enabled=%d", id(candles_enabled));
+            last_alive = now;
+          }
+          
+          if (!id(candles_enabled)) {
+            return;
+          }
+          
+          static unsigned long last_update = 0;
+          if (now - last_update < 1) {
+            return;
+          }
+          last_update = now;
+          
+          float speed = 1.0;
+          float intensity = 1.0;
+          float frequency = 1.0;
+          
+          // Debug Logging alle 1000ms - UPGRADED
+          static unsigned long last_log = 0;
+          if (now - last_log > 1000) {
+            ESP_LOGD("candle", "C1: prog=%d repeat=%d wait=%d bright=%.2f accel=%.4f dim_lim=%.2f", 
+              id(candle_1_program), id(candle_1_repeat), id(candle_1_wait),
+              id(candle_1_brightness), id(candle_1_acceleration), id(candle_1_dim_limit));
+            ESP_LOGD("candle", "C2: prog=%d repeat=%d wait=%d bright=%.2f accel=%.4f dim_lim=%.2f", 
+              id(candle_2_program), id(candle_2_repeat), id(candle_2_wait),
+              id(candle_2_brightness), id(candle_2_acceleration), id(candle_2_dim_limit));
+            ESP_LOGD("candle", "C3: prog=%d repeat=%d wait=%d bright=%.2f accel=%.4f dim_lim=%.2f", 
+              id(candle_3_program), id(candle_3_repeat), id(candle_3_wait),
+              id(candle_3_brightness), id(candle_3_acceleration), id(candle_3_dim_limit));
+            ESP_LOGD("candle", "Params: speed=%.1f intensity=%.1f frequency=%.1f", 
+              speed, intensity, frequency);
+            last_log = now;
+          }
+          
+          // KERZE 1
+          if (id(candle_1_wait) > 0) {
+            id(candle_1_wait)--;
+          } else {
+            if (id(candle_1_acceleration) < 0) {
+              id(candle_1_brightness) += id(candle_1_acceleration) * speed;
+              if (id(candle_1_brightness) <= id(candle_1_dim_limit)) {
+                id(candle_1_acceleration) = -id(candle_1_acceleration);
+              }
+            } else if (id(candle_1_acceleration) > 0) {
+              id(candle_1_brightness) += id(candle_1_acceleration) * speed;
+              if (id(candle_1_brightness) >= 1.0) {
+                id(candle_1_acceleration) = -id(candle_1_acceleration);
+                id(candle_1_wait) = id(candle_1_wait_between) / speed;
+                id(candle_1_repeat)--;
+                if (id(candle_1_repeat) <= 0) {
+                  int prog = id(candle_1_program);
+                  int rnd = random(0, 100);
+                  ESP_LOGD("candle", "C1 State Change: prog=%d rnd=%d", prog, rnd);
+                  if (prog == 1) {
+                    // Fire -> Flicker oder zurück zu Fire
+                    if (rnd > (90 / frequency)) {
+                      id(candle_1_program) = 3;
+                      id(candle_1_dim_limit) = 0.80 * intensity;
+                      id(candle_1_acceleration) = -0.005;
+                      id(candle_1_wait_between) = random(100, 200);
+                      id(candle_1_repeat) = max(1, (int)(random(10, 20) / frequency));
+                      ESP_LOGD("candle", "C1 -> Flicker (3): repeat=%d", id(candle_1_repeat));
+                    } else {
+                      // Zurück zu Fire (Original)
+                      id(candle_1_program) = 1;
+                      id(candle_1_dim_limit) = 0.89 * intensity;
+                      id(candle_1_acceleration) = -0.0006 * speed;
+                      id(candle_1_wait_between) = random(30, 80);
+                      id(candle_1_repeat) = max(1, (int)(random(200, 400) / frequency));
+                      ESP_LOGD("candle", "C1 -> Fire (1): repeat=%d", id(candle_1_repeat));
+                    }
+                  } else if (prog == 3) {
+                    // Flicker -> Flutter oder zurück zu Fire
+                    if (rnd > (90 / frequency)) {
+                      id(candle_1_program) = 4;
+                      id(candle_1_dim_limit) = 0.60 * intensity;
+                      id(candle_1_acceleration) = -0.01;
+                      id(candle_1_wait_between) = random(300, 700);
+                      id(candle_1_repeat) = max(1, (int)(random(5, 10) / frequency));
+                      ESP_LOGD("candle", "C1 -> Flutter (4): repeat=%d", id(candle_1_repeat));
+                    } else {
+                      // Zurück zu Fire
+                      id(candle_1_program) = 1;
+                      id(candle_1_dim_limit) = 0.89 * intensity;
+                      id(candle_1_acceleration) = -0.0006;
+                      id(candle_1_wait_between) = random(30, 80);
+                      id(candle_1_repeat) = max(1, (int)(random(200, 400) / frequency));
+                      ESP_LOGD("candle", "C1 -> Fire (1): repeat=%d", id(candle_1_repeat));
+                    }
+                  } else {
+                    // Flutter -> zurück zu Flicker
+                    id(candle_1_program) = 3;
+                    id(candle_1_dim_limit) = 0.80 * intensity;
+                    id(candle_1_acceleration) = -0.005;
+                    id(candle_1_wait_between) = random(100, 200);
+                    id(candle_1_repeat) = max(1, (int)(random(10, 20) / frequency));
+                    ESP_LOGD("candle", "C1 -> Flicker (3): repeat=%d", id(candle_1_repeat));
+                  }
+                }
+              }
+            }
+          }
+          
+          // KERZE 2 (gleiche Logik)
+          if (id(candle_2_wait) > 0) {
+            id(candle_2_wait)--;
+          } else {
+            if (id(candle_2_acceleration) < 0) {
+              id(candle_2_brightness) += id(candle_2_acceleration) * speed;
+              if (id(candle_2_brightness) <= id(candle_2_dim_limit)) {
+                id(candle_2_acceleration) = -id(candle_2_acceleration);
+              }
+            } else if (id(candle_2_acceleration) > 0) {
+              id(candle_2_brightness) += id(candle_2_acceleration) * speed;
+              if (id(candle_2_brightness) >= 1.0) {
+                id(candle_2_acceleration) = -id(candle_2_acceleration);
+                id(candle_2_wait) = id(candle_2_wait_between) / speed;
+                id(candle_2_repeat)--;
+                if (id(candle_2_repeat) <= 0) {
+                  int prog = id(candle_2_program);
+                  int rnd = random(0, 100);
+                  if (prog == 1) {
+                    if (rnd > (90 / frequency)) {
+                      id(candle_2_program) = 3;
+                      id(candle_2_dim_limit) = 0.80 * intensity;
+                      id(candle_2_acceleration) = -0.005;
+                      id(candle_2_wait_between) = random(100, 200);
+                      id(candle_2_repeat) = max(1, (int)(random(10, 20) / frequency));
+                    } else {
+                      id(candle_2_program) = 1;
+                      id(candle_2_dim_limit) = 0.89 * intensity;
+                      id(candle_2_acceleration) = -0.0006 * speed;
+                      id(candle_2_wait_between) = random(35, 90);
+                      id(candle_2_repeat) = max(1, (int)(random(200, 400) / frequency));
+                    }
+                  } else if (prog == 3) {
+                    if (rnd > (90 / frequency)) {
+                      id(candle_2_program) = 4;
+                      id(candle_2_dim_limit) = 0.60 * intensity;
+                      id(candle_2_acceleration) = -0.01;
+                      id(candle_2_wait_between) = random(300, 700);
+                      id(candle_2_repeat) = max(1, (int)(random(5, 10) / frequency));
+                    } else {
+                      id(candle_2_program) = 1;
+                      id(candle_2_dim_limit) = 0.89 * intensity;
+                      id(candle_2_acceleration) = -0.0006;
+                      id(candle_2_wait_between) = random(35, 90);
+                      id(candle_2_repeat) = max(1, (int)(random(200, 400) / frequency));
+                    }
+                  } else {
+                    id(candle_2_program) = 3;
+                    id(candle_2_dim_limit) = 0.80 * intensity;
+                    id(candle_2_acceleration) = -0.005;
+                    id(candle_2_wait_between) = random(100, 200);
+                    id(candle_2_repeat) = max(1, (int)(random(10, 20) / frequency));
+                  }
+                }
+              }
+            }
+          }
+          
+          // KERZE 3
+          if (id(candle_3_wait) > 0) {
+            id(candle_3_wait)--;
+          } else {
+            if (id(candle_3_acceleration) < 0) {
+              id(candle_3_brightness) += id(candle_3_acceleration) * speed;
+              if (id(candle_3_brightness) <= id(candle_3_dim_limit)) {
+                id(candle_3_acceleration) = -id(candle_3_acceleration);
+              }
+            } else if (id(candle_3_acceleration) > 0) {
+              id(candle_3_brightness) += id(candle_3_acceleration) * speed;
+              if (id(candle_3_brightness) >= 1.0) {
+                id(candle_3_acceleration) = -id(candle_3_acceleration);
+                id(candle_3_wait) = id(candle_3_wait_between) / speed;
+                id(candle_3_repeat)--;
+                if (id(candle_3_repeat) <= 0) {
+                  int prog = id(candle_3_program);
+                  int rnd = random(0, 100);
+                  if (prog == 1) {
+                    if (rnd > (90 / frequency)) {
+                      id(candle_3_program) = 3;
+                      id(candle_3_dim_limit) = 0.80 * intensity;
+                      id(candle_3_acceleration) = -0.005;
+                      id(candle_3_wait_between) = random(100, 200);
+                      id(candle_3_repeat) = max(1, (int)(random(10, 20) / frequency));
+                    } else {
+                      id(candle_3_program) = 1;
+                      id(candle_3_dim_limit) = 0.89 * intensity;
+                      id(candle_3_acceleration) = -0.0006 * speed;
+                      id(candle_3_wait_between) = random(40, 100);
+                      id(candle_3_repeat) = max(1, (int)(random(200, 400) / frequency));
+                    }
+                  } else if (prog == 3) {
+                    if (rnd > (90 / frequency)) {
+                      id(candle_3_program) = 4;
+                      id(candle_3_dim_limit) = 0.60 * intensity;
+                      id(candle_3_acceleration) = -0.01;
+                      id(candle_3_wait_between) = random(300, 700);
+                      id(candle_3_repeat) = max(1, (int)(random(5, 10) / frequency));
+                    } else {
+                      id(candle_3_program) = 1;
+                      id(candle_3_dim_limit) = 0.89 * intensity;
+                      id(candle_3_acceleration) = -0.0006;
+                      id(candle_3_wait_between) = random(40, 100);
+                      id(candle_3_repeat) = max(1, (int)(random(200, 400) / frequency));
+                    }
+                  } else {
+                    id(candle_3_program) = 3;
+                    id(candle_3_dim_limit) = 0.80 * intensity;
+                    id(candle_3_acceleration) = -0.005;
+                    id(candle_3_wait_between) = random(100, 200);
+                    id(candle_3_repeat) = max(1, (int)(random(10, 20) / frequency));
+                  }
+                }
+              }
+            }
+          }
+          
+          // AUSGABE - Feste Kerzen-Farbe (Warm Orange)
+          float br1 = id(candle_1_brightness);
+          float br2 = id(candle_2_brightness);
+          float br3 = id(candle_3_brightness);
+          
+          // RGB: (255, 178, 31) = (1.0, 0.7, 0.12)
+          float out_d1 = 1.0 * br1;   // Red
+          float out_d2 = 0.12 * br1;  // Blue
+          float out_d3 = 0.7 * br1;   // Green
+          float out_d5 = 0.12 * br2;  // Blue
+          float out_d6 = 0.7 * br2;   // Green
+          float out_d7 = 0.12 * br3;  // Blue
+          float out_d8 = 0.7 * br3;   // Green
+          
+          id(output_d1).set_level(out_d1);
+          id(output_d2).set_level(out_d2);
+          id(output_d3).set_level(out_d3);
+          id(output_d5).set_level(out_d5);
+          id(output_d6).set_level(out_d6);
+          id(output_d7).set_level(out_d7);
+          id(output_d8).set_level(out_d8);
+          
+          // PWM Debug alle 500ms
+          static unsigned long last_pwm_log = 0;
+          if (now - last_pwm_log > 500) {
+            ESP_LOGD("candle", "PWM: D1=%.2f D2=%.2f D3=%.2f D5=%.2f D6=%.2f D7=%.2f D8=%.2f", 
+              out_d1, out_d2, out_d3, out_d5, out_d6, out_d7, out_d8);
+            last_pwm_log = now;
+          }
+
+button:
+  - platform: restart
+    name: "Restart"
+  - platform: template
+    name: "Set Fire Mode"
+    icon: "mdi:fire"
+    on_press:
+      - lambda: |-
+          ESP_LOGD("candle", "Setting all candles to Fire mode");
+          id(candle_1_program) = 1;
+          id(candle_1_dim_limit) = 0.89;
+          id(candle_1_acceleration) = -0.0006;
+          id(candle_1_repeat) = 300;
+          id(candle_2_program) = 1;
+          id(candle_2_dim_limit) = 0.89;
+          id(candle_2_acceleration) = -0.0006;
+          id(candle_2_repeat) = 100;
+          id(candle_3_program) = 1;
+          id(candle_3_dim_limit) = 0.89;
+          id(candle_3_acceleration) = -0.0006;
+          id(candle_3_repeat) = 15;
+  - platform: template
+    name: "Set Flicker Mode"
+    icon: "mdi:white-balance-sunny"
+    on_press:
+      - lambda: |-
+          ESP_LOGD("candle", "Setting all candles to Flicker mode");
+          id(candle_1_program) = 3;
+          id(candle_1_dim_limit) = 0.80;
+          id(candle_1_acceleration) = -0.005;
+          id(candle_1_repeat) = 15;
+          id(candle_2_program) = 3;
+          id(candle_2_dim_limit) = 0.80;
+          id(candle_2_acceleration) = -0.005;
+          id(candle_2_repeat) = 10;
+          id(candle_3_program) = 3;
+          id(candle_3_dim_limit) = 0.80;
+          id(candle_3_acceleration) = -0.005;
+          id(candle_3_repeat) = 12;
+  - platform: template
+    name: "Set Flutter Mode"
+    icon: "mdi:weather-windy"
+    on_press:
+      - lambda: |-
+          ESP_LOGD("candle", "Setting all candles to Flutter mode");
+          id(candle_1_program) = 4;
+          id(candle_1_dim_limit) = 0.60;
+          id(candle_1_acceleration) = -0.01;
+          id(candle_1_repeat) = 8;
+          id(candle_2_program) = 4;
+          id(candle_2_dim_limit) = 0.60;
+          id(candle_2_acceleration) = -0.01;
+          id(candle_2_repeat) = 6;
+          id(candle_3_program) = 4;
+          id(candle_3_dim_limit) = 0.60;
+          id(candle_3_acceleration) = -0.01;
+          id(candle_3_repeat) = 5;
+
+sensor:
+  - platform: wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "Uptime"
+  - platform: template
+    name: "Candle 1 Brightness"
+    id: candle_1_brightness_sensor
+    icon: "mdi:brightness-percent"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return id(candle_1_brightness) * 100.0;
+  - platform: template
+    name: "Candle 2 Brightness"
+    id: candle_2_brightness_sensor
+    icon: "mdi:brightness-percent"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return id(candle_2_brightness) * 100.0;
+  - platform: template
+    name: "Candle 3 Brightness"
+    id: candle_3_brightness_sensor
+    icon: "mdi:brightness-percent"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 1s
+    lambda: |-
+      return id(candle_3_brightness) * 100.0;
+
+binary_sensor:
+  - platform: status
+    name: "Status"
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "IP Address"
+  - platform: template
+    name: "Candle 1 Mode"
+    id: candle_1_mode_text
+    icon: "mdi:candle"
+    update_interval: 1s
+    lambda: |-
+      int prog = id(candle_1_program);
+      if (prog == 1) return {"Fire"};
+      if (prog == 2) return {"On"};
+      if (prog == 3) return {"Flicker"};
+      if (prog == 4) return {"Flutter"};
+      return {"Unknown"};
+  - platform: template
+    name: "Candle 2 Mode"
+    id: candle_2_mode_text
+    icon: "mdi:candle"
+    update_interval: 1s
+    lambda: |-
+      int prog = id(candle_2_program);
+      if (prog == 1) return {"Fire"};
+      if (prog == 2) return {"On"};
+      if (prog == 3) return {"Flicker"};
+      if (prog == 4) return {"Flutter"};
+      return {"Unknown"};
+  - platform: template
+    name: "Candle 3 Mode"
+    id: candle_3_mode_text
+    icon: "mdi:candle"
+    update_interval: 1s
+    lambda: |-
+      int prog = id(candle_3_program);
+      if (prog == 1) return {"Fire"};
+      if (prog == 2) return {"On"};
+      if (prog == 3) return {"Flicker"};
+      if (prog == 4) return {"Flutter"};
+      return {"Unknown"};
